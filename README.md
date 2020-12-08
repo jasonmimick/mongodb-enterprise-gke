@@ -1,79 +1,206 @@
-# MongoDB CLI
-[![Build Status](https://cloud.drone.io/api/badges/mongodb/mongocli/status.svg)](https://cloud.drone.io/mongodb/mongocli)
+> Use this file as a template for your application's README. Delete any
+sections that don't apply to your app. Delete this note when you start
+editing.
 
-`mongocli` is a tool for managing your MongoDB cloud services
+----
 
-![Screenshot 2020-04-07 at 16 27 14](https://user-images.githubusercontent.com/461027/78688122-d3d83b80-78ec-11ea-84f9-06a24ed7f75a.png)
+# Overview
 
-## Installing
+MongoDB
 
-### Hombrew on macOS or Linux
+For more information on MongoDB, see the
+[MongoDB website](https://example.com/).
 
-```bash
-brew tap mongodb/brew
-brew install mongocli
+## About Google Click to Deploy
+
+Popular open source software stacks on Kubernetes packaged by Google and made
+available in Google Cloud Marketplace.
+
+# Installation
+
+## Quick install with Google Cloud Marketplace
+
+Get up and running with a few clicks! Install this MongoDB to a
+Google Kubernetes Engine cluster using Google Cloud Marketplace. Follow the
+[on-screen instructions](https://console.cloud.google.com/marketplace/details/google/sample-app).
+
+## Command line instructions
+
+You can use [Google Cloud Shell](https://cloud.google.com/shell/) or a local
+workstation to follow the steps below.
+
+[![Open in Cloud Shell](http://gstatic.com/cloudssh/images/open-btn.svg)](https://console.cloud.google.com/cloudshell/editor?cloudshell_git_repo=https://github.com/GoogleCloudPlatform/click-to-deploy&cloudshell_open_in_editor=README.md&cloudshell_working_dir=k8s/sample-app)
+
+### Prerequisites
+
+#### Set up command line tools
+
+You'll need the following tools in your development environment. If you are
+using Cloud Shell, `gcloud`, `kubectl`, Docker, and Git are installed in your
+environment by default.
+
+-   [gcloud](https://cloud.google.com/sdk/gcloud/)
+-   [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+-   [docker](https://docs.docker.com/install/)
+-   [openssl](https://www.openssl.org/)
+
+Configure `gcloud` as a Docker credential helper:
+
+```shell
+gcloud auth configure-docker
 ```
 
-### Pre-built Binaries
-Download the appropriate version for your platform from [mongocli releases](https://github.com/mongodb/mongocli/releases). 
-Once downloaded, the binary can be run from anywhere.
-You don't need to install it into a global location. 
-This works well for shared hosts and other systems where you don't have a privileged account.
+#### Create a Google Kubernetes Engine cluster
 
-Ideally, you should install it somewhere in your PATH for easy use. `/usr/local/bin` is the most probable location.
+Create a cluster from the command line. If you already have a cluster that you
+want to use, this step is optional.
 
-### Build from Source 
+```shell
+export CLUSTER=sample-app-cluster
+export ZONE=us-west1-a
 
-#### Prerequisite Tools 
-- [Git](https://git-scm.com/)
-- [Go (at least Go 1.14)](https://golang.org/dl/)
-
-#### Fetch and Install
-
-```bash
-git clone https://github.com/mongodb/mongocli.git
-cd mongocli
-make install
+gcloud container clusters create "$CLUSTER" --zone "$ZONE"
 ```
 
-## Usage
+#### Configure kubectl to connect to the cluster
 
-Run `mongocli help` for a list of available commands
-or check our [online documentation](https://docs.mongodb.com/mongocli/master/) for more details
-
-### Getting started
-
-Run `mongocli config` to set up your credentials, 
-this is optional and you can use [env variables](#environment-variables) instead.
-
-If you're working with Ops Manager or CLoud Manager you need to define the service using `--service`
-
-For Ops Manager, `mongocli config --service ops-manager`.
-For Cloud Manager, `mongocli config --service cloud-manager`.  
-
-### Environment Variables
-
-You can use a combination of the next env variables to override your profile settings
-
-- `MCLI_PUBLIC_API_KEY`
-- `MCLI_PRIVATE_API_KEY`
-- `MCLI_PROJECT_ID`
-- `MCLI_ORG_ID`
-- `MCLI_OPS_MANAGER_URL`
-
-### ZSH Completion (experimental)
-Add the following to your `.zshrc` file
-
-```bash
-source <(mongocli completion zsh)
-compdef _mongocli mongocli
+```shell
+gcloud container clusters get-credentials "$CLUSTER" --zone "$ZONE"
 ```
 
-## Contributing
+#### Clone this repo
 
-See our [CONTRIBUTING.md](CONTRIBUTING.md) Guide.
+Clone this repo and the associated tools repo:
 
-## License
+```shell
+git clone --recursive https://github.com/GoogleCloudPlatform/click-to-deploy.git
+```
 
-MongoDB CLI is released under the Apache 2.0 license. See [LICENSE](LICENSE)
-# mongodb-enterprise-gke
+#### Install the Application resource definition
+
+An Application resource is a collection of individual Kubernetes components,
+such as Services, Deployments, and so on, that you can manage as a group.
+
+To set up your cluster to understand Application resources, run the following
+command:
+
+```shell
+kubectl apply -f "https://raw.githubusercontent.com/GoogleCloudPlatform/marketplace-k8s-app-tools/master/crd/app-crd.yaml"
+```
+
+You need to run this command once for each cluster.
+
+The Application resource is defined by the
+[Kubernetes SIG-apps](https://github.com/kubernetes/community/tree/master/sig-apps)
+community. The source code can be found on
+[github.com/kubernetes-sigs/application](https://github.com/kubernetes-sigs/application).
+
+### Install the Application
+
+Navigate to the `sample-app` directory:
+
+```shell
+cd click-to-deploy/k8s/sample-app
+```
+
+#### Configure the app with environment variables
+
+Choose an instance name and
+[namespace](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/)
+for the app. In most cases, you can use the `default` namespace.
+
+```shell
+export APP_INSTANCE_NAME=sample-app-1
+export NAMESPACE=default
+```
+
+Set the sample parameter:
+
+```shell
+export SAMPLE_APP_PARAMETER1=3
+```
+
+Configure the container image:
+
+```shell
+export IMAGE_SAMPLE_APP="marketplace.gcr.io/google/nginx1:latest"
+```
+
+The image above is referenced by
+[tag](https://docs.docker.com/engine/reference/commandline/tag). We recommend
+that you pin each image to an immutable
+[content digest](https://docs.docker.com/registry/spec/api/#content-digests).
+This ensures that the installed application always uses the same images until
+you are ready to upgrade. To get the digest for the image, use the following
+script:
+
+```shell
+export IMAGE_SAMPLE_APP=$(docker pull $IMAGE_SAMPLE_APP | awk -F: "/^Digest:/ {print gensub(\":.*$\", \"\", 1, \"$IMAGE_SAMPLE_APP\")\"@sha256:\"\$3}")
+```
+
+For the persistent disk used by the sample-app deployment, you will need to:
+
+ * Set the StorageClass name. Check your available options using the command below:
+   * ```kubectl get storageclass```
+   * Or check how to create a new StorageClass in [Kubernetes Documentation](https://kubernetes.io/docs/concepts/storage/storage-classes/#the-storageclass-resource)
+
+
+```shell
+export STORAGE_CLASS="standard" # provide your StorageClass name if not "standard"
+```
+
+#### Expand the manifest template
+
+Use `envsubst` to expand the template. We recommend that you save the expanded
+manifest file for future updates to the application.
+
+```shell
+awk 'FNR==1 {print "---"}{print}' manifest/* \
+  | envsubst '$APP_INSTANCE_NAME $NAMESPACE $IMAGE_SAMPLE_APP $SAMPLE_APP_PARAMETER1 $STORAGE_CLASS' \
+  > "${APP_INSTANCE_NAME}_manifest.yaml"
+```
+
+#### Apply the manifest to your Kubernetes cluster
+
+Use `kubectl` to apply the manifest to your Kubernetes cluster.
+
+```shell
+kubectl apply -f "${APP_INSTANCE_NAME}_manifest.yaml" --namespace "${NAMESPACE}"
+```
+
+#### View the app in the Google Cloud Console
+
+To get the Console URL for your app, run the following command:
+
+```shell
+echo "https://console.cloud.google.com/kubernetes/application/${ZONE}/${CLUSTER}/${NAMESPACE}/${APP_INSTANCE_NAME}"
+```
+
+To view the app, open the URL in your browser.
+
+# Using the app
+
+## How to use MongoDB
+
+How to use MongoDB
+
+## Customize the installation
+
+To set MongoDB, follow these on-screen steps to customize your installation:
+
+> Add steps to customize the application, if applicable. Delete this note when
+you start editing.
+
+# Scaling
+
+# Backup and restore
+
+How to backup and restore MongoDB
+
+## Backing up MongoDB
+
+## Restoring your data
+
+# Updating
+
+# Logging and Monitoring
