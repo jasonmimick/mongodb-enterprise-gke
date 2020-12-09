@@ -1,129 +1,129 @@
-x-google-marketplace:
-  schemaVersion: v2
-
-  applicationApiVersion: v1beta1
-
-  publishedVersion: "$TAG"
-  publishedVersionMetadata:
-    releaseNote: >-
-      Initial release.
-    releaseTypes:
-      - Feature
-    recommended: false
-
-  clusterConstraints:
-    resources:
-      - replicas: 1
-        requests:
-          cpu: 100m
-          memory: 100Mi
-      - replicas: 1
-        requests:
-          cpu: 100m
-          memory: 100Mi
-
-  images:
-    '':
-      properties:
-        mongodb.image.repo:
-          type: REPO_WITH_REGISTRY
-        mongodb.image.tag:
-          type: TAG
-    mariadb:
-      properties:
-        db.image:
-          type: FULL
-    apache-exporter:
-      properties:
-        apache.exporter.image:
-          type: FULL
-    mysqld-exporter:
-      properties:
-        db.exporter.image:
-          type: FULL
-    prometheus-to-sd:
-      properties:
-        metrics.image:
-          type: FULL
-
+## TODO THIS IS NOT FIXED UP - JUST CHANGED TO MONGODB
+applicationApiVersion: v1beta1
 properties:
-  name:
-    type: string
-    x-google-marketplace:
-      type: NAME
-  namespace:
-    type: string
-    x-google-marketplace:
-      type: NAMESPACE
-  mongodb.persistence.storageClass:
-    type: string
-    title: StorageClass
-    description: You can choose an existing StorageClass or create a new one.
-    x-google-marketplace:
-      type: STORAGE_CLASS
-      storageClass:
-        type: SSD
-  mongodb.persistence.size:
-    type: string
-    title: Storage size for mongodb.
-    default: "8Gi"
-    description: The storage size for mongodb persistent volume
-    pattern: '^[1-9][0-9]*(\.[0-9]+)?[TGM]i?$'
-  mongodb.password:
-    type: string
-    x-google-marketplace:
-      type: GENERATED_PASSWORD
-      generatedPassword:
-        length: 10
-        includeSymbols: False
-        base64: False
-  db.rootPassword:
-    type: string
-    x-google-marketplace:
-      type: GENERATED_PASSWORD
-      generatedPassword:
-        length: 10
-        includeSymbols: False
-        base64: False
-  db.mongodbPassword:
-    type: string
-    x-google-marketplace:
-      type: GENERATED_PASSWORD
-      generatedPassword:
-        length: 10
-        includeSymbols: False
-        base64: False
-  db.exporter.password:
-    type: string
-    x-google-marketplace:
-      type: GENERATED_PASSWORD
-      generatedPassword:
-        length: 10
-        includeSymbols: False
-        base64: False
+  BACKUP_STORAGE_CAPACITY:
+    title: Backup Storage Capacity [GiB]
+    description: Default gigabytes allocated to new backup PVCs
+    type: integer
+    default: 1
+    minimum: 1
 
-  enablePublicServiceAndIngress:
-    type: boolean
-    title: Enable public IP access
-    description: Set the mongodb Service type to NodePort and enable Ingress
-    default: false
-  metrics.exporter.enabled:
-    type: boolean
-    title: Enable Stackdriver Metrics Exporter
-    description: Your GCP project should have Stackdriver enabled. For non-GCP clusters, export of metrics to Stackdriver is not supported yet
-    default: false
-  certificate:
+  INSTALLER_IMAGE: { type: string, x-google-marketplace: { type: DEPLOYER_IMAGE } }
+
+  INSTALLER_SERVICE_ACCOUNT: # This key appears in the ClusterRoleBinding name.
+    title: Cluster Admin Service Account
+    description: >-
+      Name of a service account in the target namespace that has cluster-admin permissions.
+      This is used by the operator installer to create Custom Resource Definitions.
     type: string
     x-google-marketplace:
-      type: TLS_CERTIFICATE
-      tlsCertificate:
-        generatedProperties:
-          base64EncodedPrivateKey: tls.base64EncodedPrivateKey
-          base64EncodedCertificate: tls.base64EncodedCertificate
+      type: SERVICE_ACCOUNT
+      serviceAccount:
+        roles:
+          - type: ClusterRole
+            rulesType: PREDEFINED
+            rulesFromRoleName: cluster-admin
+
+  OPERATOR_ADMIN_PASSWORD:
+    title: Operator admin password
+    type: string
+    pattern: .+
+    x-google-marketplace:
+      type: MASKED_FIELD
+
+  OPERATOR_IMAGE:
+    type: string
+    default: gcr.io/crunchydata-public/postgres-operator:${PGO_VERSION}
+    x-google-marketplace: { type: IMAGE }
+
+  OPERATOR_IMAGE_API:
+    type: string
+    default: gcr.io/crunchydata-public/postgres-operator/pgo-apiserver:${PGO_VERSION}
+    x-google-marketplace: { type: IMAGE }
+
+  OPERATOR_IMAGE_EVENT:
+    type: string
+    default: gcr.io/crunchydata-public/postgres-operator/pgo-event:${PGO_VERSION}
+    x-google-marketplace: { type: IMAGE }
+
+  OPERATOR_IMAGE_SCHEDULER:
+    type: string
+    default: gcr.io/crunchydata-public/postgres-operator/pgo-scheduler:${PGO_VERSION}
+    x-google-marketplace: { type: IMAGE }
+
+  OPERATOR_NAME:      { type: string, x-google-marketplace: { type: NAME } }
+  OPERATOR_NAMESPACE: { type: string, x-google-marketplace: { type: NAMESPACE } }
+
+  PGBACKREST_STORAGE_CAPACITY:
+    title: pgBackRest Storage Capacity [GiB]
+    description: Default gigabytes allocated to new pgBackRest repositories
+    type: integer
+    default: 2
+    minimum: 2
+
+  MONGODB_CPU:
+    title: PostgreSQL CPU [mCPU]
+    description: Default mCPU allocated to new PostgreSQL clusters (1000 equals one Core)
+    type: integer
+    default: 1000
+    minimum: 100
+
+  MONGODB_MEM:
+    title: PostgreSQL Memory [GiB]
+    description: Default gigabytes allocated to new PostgreSQL clusters
+    type: integer
+    default: 2
+    minimum: 1
+
+  MONGODB_METRICS:
+    title: Always collect PostgreSQL metrics
+    description: When disabled, collection can be enabled per PostgreSQL cluster
+    type: boolean
+    default: false
+
+  MONGODB_SERVICE_TYPE:
+    title: PostgreSQL service type
+    description: Default type of the Service that exposes new PostgreSQL clusters
+    type: string
+    enum: [ ClusterIP, LoadBalancer, NodePort ]
+    default: ClusterIP
+
+  MONGODB_STORAGE_CAPACITY:
+    title: PostgreSQL Storage Capacity [GiB]
+    description: Default gigabytes allocated to new PostgreSQL clusters
+    type: integer
+    default: 1
+    minimum: 1
 
 required:
-- name
-- namespace
-- mongodb.persistence.size
-- enablePublicServiceAndIngress
-- metrics.exporter.enabled
+  - INSTALLER_IMAGE
+  - INSTALLER_SERVICE_ACCOUNT
+
+  - OPERATOR_ADMIN_PASSWORD
+  - OPERATOR_IMAGE
+  - OPERATOR_IMAGE_API
+  - OPERATOR_IMAGE_EVENT
+  - OPERATOR_IMAGE_SCHEDULER
+  - OPERATOR_NAME
+  - OPERATOR_NAMESPACE
+
+  - MONGODB_SERVICE_TYPE
+  - MONGODB_CPU
+  - MONGODB_MEM
+  - MONGODB_STORAGE_CAPACITY
+  - MONGODB_METRICS
+
+  - PGBACKREST_STORAGE_CAPACITY
+
+  - BACKUP_STORAGE_CAPACITY
+
+x-google-marketplace:
+  clusterConstraints:
+    istio: { type: UNSUPPORTED }
+
+form:
+  - widget: help
+    description: |-
+      Only one instance of Crunchy PostgreSQL Operator is necessary per Kubernetes cluster.
+
+      If you have further questions, contact us at <a href="mailto:info@crunchydata.com">info@crunchydata.com</a>.
