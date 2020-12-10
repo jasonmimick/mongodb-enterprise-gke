@@ -1,129 +1,115 @@
 ## TODO THIS IS NOT FIXED UP - JUST CHANGED TO MONGODB
 applicationApiVersion: v1beta1
 properties:
-  BACKUP_STORAGE_CAPACITY:
-    title: Backup Storage Capacity [GiB]
-    description: Default gigabytes allocated to new backup PVCs
+
+  INSTALL_OPS_MANAGER:
+    title: Install Ops Manager
+    description: Select Yes to install Ops Manager or No when Ops Manager is deployed
+    type: boolean
+    default: true
+
+  # Kubernetes internal DNS
+  CLUSTER_NAME: 
+    title: Anthos cluster DNS name
+    type: string
+    x-google-marketplace: 
+      type: NAME 
+    default: cluster.local 
+
+  GLOBAL_ADMIN_EMAIL:  
+    type: string
+    x-google-marketplace: 
+      type: NAME 
+  GLOBAL_ADMIN_PASSWORD:
+      title: Ops Manager admin password
+      type: string
+      pattern: .+
+      x-google-marketplace:
+        type: MASKED_FIELD
+
+  # Mongo Section
+  ORG_NAME:
+    title: Ops Manager Org Name
+    type: string
+    x-google-marketplace: 
+      type: NAME 
+  NAME:
+    title: MongoDB Cluster Name
+    type: string
+    x-google-marketplace: 
+      type: NAME
+  VERSION:
+    title: MongoDB Version number
+    type: string
+    default: 4.4.2   
+  MEMBERS:
+    title: Number of nodes in ReplicaSet    
+    type: integer
+    default: 3
+    minimum: 1
+  MONGODB_NAMESPACE: { type: string, x-google-marketplace: { type: NAMESPACE } }
+
+  # SECURITY_TLS:
+  # SECURITY_CA:
+
+
+  MONGODB_REQUESTS_CPU:
+    title: MongoDB CPU [mCPU]
+    description: Default mCPU allocated to new MongoDB clusters (1000 equals one Core)
+    type: integer
+    default: 1000
+    minimum: 100
+  MONGODB_LIMITS_CPU:
+    title: MongoDB CPU [mCPU]
+    description: Default mCPU allocated to new MongoDB clusters (1000 equals one Core)
+    type: integer
+    default: 1000
+    minimum: 100
+  MONGODB_REQUESTS_MEM:
+    title: MongoDB Memory [GiB]
+    description: Default gigabytes allocated to new MongoDB clusters
     type: integer
     default: 1
     minimum: 1
+  MONGODB_LIMITS_MEM:
+    title: MongoDB Memory [GiB]
+    description: Default gigabytes allocated to new MongoDB clusters
+    type: integer
+    default: 2
+    minimum: 1
+  MONGODB_STORAGE:
+    title: Storage Capacity [GiB]
+    description: Default gigabytes allocated to new PVCs
+    type: integer
+    default: 50
+    minimum: 2
 
-  INSTALLER_IMAGE: { type: string, x-google-marketplace: { type: DEPLOYER_IMAGE } }
-
-  INSTALLER_SERVICE_ACCOUNT: # This key appears in the ClusterRoleBinding name.
-    title: Cluster Admin Service Account
-    description: >-
-      Name of a service account in the target namespace that has cluster-admin permissions.
-      This is used by the operator installer to create Custom Resource Definitions.
+  DB_ADMIN_USER: 
     type: string
-    x-google-marketplace:
-      type: SERVICE_ACCOUNT
-      serviceAccount:
-        roles:
-          - type: ClusterRole
-            rulesType: PREDEFINED
-            rulesFromRoleName: cluster-admin
-
-  OPERATOR_ADMIN_PASSWORD:
+    title: MongoDB Admin User name
+    x-google-marketplace: 
+      type: NAME 
+    default: admin
+  DB_ADMIN_PASSWORD:
     title: Operator admin password
     type: string
     pattern: .+
     x-google-marketplace:
       type: MASKED_FIELD
 
-  OPERATOR_IMAGE:
-    type: string
-    default: gcr.io/crunchydata-public/postgres-operator:${PGO_VERSION}
-    x-google-marketplace: { type: IMAGE }
+  INSTALLER_IMAGE: { type: string, x-google-marketplace: { type: DEPLOYER_IMAGE } }
 
-  OPERATOR_IMAGE_API:
-    type: string
-    default: gcr.io/crunchydata-public/postgres-operator/pgo-apiserver:${PGO_VERSION}
-    x-google-marketplace: { type: IMAGE }
-
-  OPERATOR_IMAGE_EVENT:
-    type: string
-    default: gcr.io/crunchydata-public/postgres-operator/pgo-event:${PGO_VERSION}
-    x-google-marketplace: { type: IMAGE }
-
-  OPERATOR_IMAGE_SCHEDULER:
-    type: string
-    default: gcr.io/crunchydata-public/postgres-operator/pgo-scheduler:${PGO_VERSION}
-    x-google-marketplace: { type: IMAGE }
-
-  OPERATOR_NAME:      { type: string, x-google-marketplace: { type: NAME } }
-  OPERATOR_NAMESPACE: { type: string, x-google-marketplace: { type: NAMESPACE } }
-
-  PGBACKREST_STORAGE_CAPACITY:
-    title: pgBackRest Storage Capacity [GiB]
-    description: Default gigabytes allocated to new pgBackRest repositories
-    type: integer
-    default: 2
-    minimum: 2
-
-  MONGODB_CPU:
-    title: PostgreSQL CPU [mCPU]
-    description: Default mCPU allocated to new PostgreSQL clusters (1000 equals one Core)
-    type: integer
-    default: 1000
-    minimum: 100
-
-  MONGODB_MEM:
-    title: PostgreSQL Memory [GiB]
-    description: Default gigabytes allocated to new PostgreSQL clusters
-    type: integer
-    default: 2
-    minimum: 1
-
-  MONGODB_METRICS:
-    title: Always collect PostgreSQL metrics
-    description: When disabled, collection can be enabled per PostgreSQL cluster
-    type: boolean
-    default: false
-
-  MONGODB_SERVICE_TYPE:
-    title: PostgreSQL service type
-    description: Default type of the Service that exposes new PostgreSQL clusters
-    type: string
-    enum: [ ClusterIP, LoadBalancer, NodePort ]
-    default: ClusterIP
-
-  MONGODB_STORAGE_CAPACITY:
-    title: PostgreSQL Storage Capacity [GiB]
-    description: Default gigabytes allocated to new PostgreSQL clusters
-    type: integer
-    default: 1
-    minimum: 1
 
 required:
-  - INSTALLER_IMAGE
-  - INSTALLER_SERVICE_ACCOUNT
+  - GLOBAL_ADMIN_EMAIL
+  - GLOBAL_ADMIN_PASSWORD
+  - ORG_NAME
+  - NAME
+  - MONGODB_NAMESPACE
+  - DB_ADMIN_USER
+  - DB_ADMIN_PASSWORD
 
-  - OPERATOR_ADMIN_PASSWORD
-  - OPERATOR_IMAGE
-  - OPERATOR_IMAGE_API
-  - OPERATOR_IMAGE_EVENT
-  - OPERATOR_IMAGE_SCHEDULER
-  - OPERATOR_NAME
-  - OPERATOR_NAMESPACE
-
-  - MONGODB_SERVICE_TYPE
-  - MONGODB_CPU
-  - MONGODB_MEM
-  - MONGODB_STORAGE_CAPACITY
-  - MONGODB_METRICS
-
-  - PGBACKREST_STORAGE_CAPACITY
-
-  - BACKUP_STORAGE_CAPACITY
 
 x-google-marketplace:
   clusterConstraints:
     istio: { type: UNSUPPORTED }
-
-form:
-  - widget: help
-    description: |-
-      Only one instance of Crunchy PostgreSQL Operator is necessary per Kubernetes cluster.
-
-      If you have further questions, contact us at <a href="mailto:info@crunchydata.com">info@crunchydata.com</a>.
